@@ -9,17 +9,17 @@ import { Progress } from '@/components/ui/progress';
 
 interface StudySessionProps {
   words: VocabularyWord[];
-  wordCount: number;
   onUpdateWord: (wordId: string, isCorrect: boolean, difficulty: DifficultyRating) => void;
   onClose: () => void;
 }
 
-export function StudySession({ words, wordCount, onUpdateWord, onClose }: StudySessionProps) {
+export function StudySession({ words, onUpdateWord, onClose }: StudySessionProps) {
   const {
     isActive,
     currentQuestion,
     currentIndex,
     totalQuestions,
+    answeredCount,
     progress,
     sessionResult,
     startSession,
@@ -31,8 +31,8 @@ export function StudySession({ words, wordCount, onUpdateWord, onClose }: StudyS
   } = useStudySession(words, onUpdateWord);
 
   useEffect(() => {
-    startSession(wordCount);
-  }, [startSession, wordCount]);
+    startSession();
+  }, [startSession]);
 
   const handleAnswer = (answer: string, difficulty: DifficultyRating) => {
     return submitAnswer(answer, difficulty);
@@ -51,7 +51,7 @@ export function StudySession({ words, wordCount, onUpdateWord, onClose }: StudyS
         result={sessionResult}
         onRestart={() => {
           resetSession();
-          startSession(wordCount);
+          startSession();
         }}
         onClose={onClose}
       />
@@ -75,7 +75,7 @@ export function StudySession({ words, wordCount, onUpdateWord, onClose }: StudyS
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b">
         <div className="container max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={() => endSession()} className="rounded-full">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Exit
             </Button>
@@ -87,15 +87,14 @@ export function StudySession({ words, wordCount, onUpdateWord, onClose }: StudyS
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                endSession();
-              }}
+              className="rounded-full"
+              onClick={() => endSession()}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
           
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-2 rounded-full" />
         </div>
       </header>
 
