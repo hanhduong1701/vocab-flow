@@ -7,6 +7,7 @@ export interface VocabularyWord {
   example_vi?: string;
   topic?: string;
   extra_fields?: Record<string, string>;
+  source_file?: string; // Track which CSV file this came from
   
   // Spaced repetition fields
   level: number; // 1-5
@@ -15,6 +16,13 @@ export interface VocabularyWord {
   correct_count: number;
   incorrect_count: number;
   created_at: Date;
+}
+
+export interface CSVSource {
+  id: string;
+  filename: string;
+  imported_at: Date;
+  word_count: number;
 }
 
 export interface StudySession {
@@ -26,6 +34,19 @@ export interface StudySession {
   words_reviewed: string[];
   words_leveled_up: string[];
   words_leveled_down: string[];
+}
+
+export interface DailyStats {
+  date: string; // YYYY-MM-DD
+  words_studied: number;
+  correct_count: number;
+  incorrect_count: number;
+}
+
+export interface LearningStreak {
+  current_streak: number;
+  longest_streak: number;
+  last_study_date: string | null; // YYYY-MM-DD
 }
 
 export type QuestionType = 'cloze' | 'multiple_choice' | 'listening' | 'active_recall';
@@ -47,6 +68,7 @@ export interface ImportResult {
   skipped: number;
   failed: number;
   errors: string[];
+  sourceId?: string;
 }
 
 // Spaced repetition intervals in milliseconds

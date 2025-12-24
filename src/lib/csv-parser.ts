@@ -80,7 +80,8 @@ function generateId(): string {
 export function importCSV(
   csvText: string,
   existingWords: VocabularyWord[],
-  onDuplicate: 'skip' | 'overwrite' = 'skip'
+  onDuplicate: 'skip' | 'overwrite' = 'skip',
+  sourceId?: string
 ): { words: VocabularyWord[]; result: ImportResult } {
   const result: ImportResult = {
     success: 0,
@@ -138,6 +139,7 @@ export function importCSV(
           example_vi: row.Example_VI?.trim(),
           topic: row.Topic?.trim(),
           extra_fields: extractExtraFields(row),
+          source_file: sourceId || existing.source_file,
         };
         result.success++;
         continue;
@@ -154,6 +156,7 @@ export function importCSV(
       example_vi: row.Example_VI?.trim(),
       topic: row.Topic?.trim(),
       extra_fields: extractExtraFields(row),
+      source_file: sourceId,
       level: 1,
       next_review: new Date(),
       correct_count: 0,

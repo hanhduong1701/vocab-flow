@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,120 +6,120 @@
 
 @layer base {
   :root {
-    /* Primary - Teal for focus and calm learning */
-    --primary: 166 72% 35%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Soft Lavender */
+    --primary: 270 60% 72%;
+    --primary-foreground: 270 60% 15%;
     
     /* Background - Warm cream/off-white */
-    --background: 40 33% 98%;
-    --foreground: 220 25% 15%;
+    --background: 30 50% 98%;
+    --foreground: 270 20% 25%;
     
     /* Cards - Pure white with subtle warmth */
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 15%;
+    --card-foreground: 270 20% 25%;
     
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 15%;
+    --popover-foreground: 270 20% 25%;
     
-    /* Secondary - Soft sage green */
-    --secondary: 160 20% 92%;
-    --secondary-foreground: 166 72% 25%;
+    /* Secondary - Soft pink */
+    --secondary: 340 50% 92%;
+    --secondary-foreground: 340 60% 40%;
     
-    /* Muted */
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 15% 50%;
+    /* Muted - Light lavender gray */
+    --muted: 270 30% 95%;
+    --muted-foreground: 270 15% 50%;
     
-    /* Accent - Warm gold for progress/success */
-    --accent: 45 93% 58%;
-    --accent-foreground: 45 93% 15%;
+    /* Accent - Soft peach */
+    --accent: 25 80% 85%;
+    --accent-foreground: 25 60% 30%;
     
-    /* Success - Bright green */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    /* Success - Soft mint green */
+    --success: 150 50% 75%;
+    --success-foreground: 150 50% 20%;
     
-    /* Warning - Orange */
-    --warning: 25 95% 53%;
-    --warning-foreground: 0 0% 100%;
+    /* Warning - Soft peach/coral */
+    --warning: 20 70% 80%;
+    --warning-foreground: 20 70% 25%;
     
-    /* Destructive */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive - Soft rose pink (not alarming) */
+    --destructive: 350 60% 80%;
+    --destructive-foreground: 350 60% 25%;
     
-    /* Level colors for SRS */
-    --level-1: 0 84% 60%;
-    --level-2: 25 95% 53%;
-    --level-3: 45 93% 50%;
-    --level-4: 142 76% 45%;
-    --level-5: 166 72% 35%;
+    /* Level colors for SRS - Pastel progression */
+    --level-1: 350 55% 75%;
+    --level-2: 25 70% 78%;
+    --level-3: 45 65% 78%;
+    --level-4: 150 50% 72%;
+    --level-5: 270 50% 75%;
     
     /* Borders & inputs */
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 166 72% 35%;
+    --border: 270 20% 90%;
+    --input: 270 20% 90%;
+    --ring: 270 60% 72%;
     
-    --radius: 0.75rem;
+    --radius: 1rem;
     
     /* Sidebar */
-    --sidebar-background: 40 25% 96%;
-    --sidebar-foreground: 220 25% 20%;
-    --sidebar-primary: 166 72% 35%;
+    --sidebar-background: 30 40% 97%;
+    --sidebar-foreground: 270 20% 25%;
+    --sidebar-primary: 270 60% 72%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 160 20% 90%;
-    --sidebar-accent-foreground: 166 72% 25%;
-    --sidebar-border: 220 13% 88%;
-    --sidebar-ring: 166 72% 35%;
+    --sidebar-accent: 340 50% 92%;
+    --sidebar-accent-foreground: 340 60% 40%;
+    --sidebar-border: 270 20% 88%;
+    --sidebar-ring: 270 60% 72%;
   }
 
   .dark {
-    --primary: 166 65% 45%;
+    --primary: 270 50% 65%;
     --primary-foreground: 0 0% 100%;
     
-    --background: 220 20% 10%;
-    --foreground: 40 20% 95%;
+    --background: 270 15% 12%;
+    --foreground: 30 30% 92%;
     
-    --card: 220 20% 13%;
-    --card-foreground: 40 20% 95%;
+    --card: 270 15% 15%;
+    --card-foreground: 30 30% 92%;
     
-    --popover: 220 20% 13%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 270 15% 15%;
+    --popover-foreground: 30 30% 92%;
     
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 166 65% 55%;
+    --secondary: 340 30% 25%;
+    --secondary-foreground: 340 50% 85%;
     
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 270 15% 20%;
+    --muted-foreground: 270 10% 60%;
     
-    --accent: 45 90% 55%;
-    --accent-foreground: 45 90% 10%;
+    --accent: 25 50% 35%;
+    --accent-foreground: 25 60% 90%;
     
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 150 40% 40%;
+    --success-foreground: 150 50% 92%;
     
-    --warning: 25 90% 55%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 20 50% 45%;
+    --warning-foreground: 20 60% 92%;
     
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 350 45% 45%;
+    --destructive-foreground: 350 50% 95%;
     
-    --level-1: 0 70% 55%;
-    --level-2: 25 90% 55%;
-    --level-3: 45 90% 55%;
-    --level-4: 142 70% 50%;
-    --level-5: 166 65% 45%;
+    --level-1: 350 45% 55%;
+    --level-2: 25 55% 55%;
+    --level-3: 45 50% 55%;
+    --level-4: 150 40% 50%;
+    --level-5: 270 45% 60%;
     
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 166 65% 45%;
+    --border: 270 15% 22%;
+    --input: 270 15% 22%;
+    --ring: 270 50% 65%;
     
-    --sidebar-background: 220 20% 12%;
-    --sidebar-foreground: 40 20% 90%;
-    --sidebar-primary: 166 65% 45%;
+    --sidebar-background: 270 15% 14%;
+    --sidebar-foreground: 30 30% 90%;
+    --sidebar-primary: 270 50% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 166 65% 55%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 166 65% 45%;
+    --sidebar-accent: 340 30% 25%;
+    --sidebar-accent-foreground: 340 50% 85%;
+    --sidebar-border: 270 15% 20%;
+    --sidebar-ring: 270 50% 65%;
   }
 }
 
@@ -130,38 +130,50 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-family: 'Nunito', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
-    @apply font-semibold tracking-tight;
+    font-family: 'Nunito', sans-serif;
+    @apply font-bold tracking-tight;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg;
+    @apply bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg shadow-primary/5;
+  }
+  
+  .pastel-card {
+    @apply bg-card rounded-2xl border border-border/40 shadow-md shadow-primary/5 transition-all duration-300;
+  }
+  
+  .pastel-card:hover {
+    @apply shadow-lg shadow-primary/10 -translate-y-0.5;
   }
   
   .level-badge-1 {
-    @apply bg-[hsl(var(--level-1))] text-white;
+    @apply bg-[hsl(var(--level-1))] text-[hsl(350_60%_25%)];
   }
   
   .level-badge-2 {
-    @apply bg-[hsl(var(--level-2))] text-white;
+    @apply bg-[hsl(var(--level-2))] text-[hsl(25_70%_25%)];
   }
   
   .level-badge-3 {
-    @apply bg-[hsl(var(--level-3))] text-foreground;
+    @apply bg-[hsl(var(--level-3))] text-[hsl(45_65%_25%)];
   }
   
   .level-badge-4 {
-    @apply bg-[hsl(var(--level-4))] text-white;
+    @apply bg-[hsl(var(--level-4))] text-[hsl(150_50%_20%)];
   }
   
   .level-badge-5 {
-    @apply bg-[hsl(var(--level-5))] text-white;
+    @apply bg-[hsl(var(--level-5))] text-[hsl(270_50%_20%)];
+  }
+  
+  .btn-pastel {
+    @apply rounded-full font-semibold transition-all duration-200 hover:scale-105 active:scale-95;
   }
 }
 
@@ -180,6 +192,14 @@
   
   .animate-pulse-success {
     animation: pulseSuccess 0.6s ease-out;
+  }
+  
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
   }
 }
 
@@ -218,4 +238,15 @@
   0% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.4); }
   70% { box-shadow: 0 0 0 15px hsl(var(--success) / 0); }
   100% { box-shadow: 0 0 0 0 hsl(var(--success) / 0); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
