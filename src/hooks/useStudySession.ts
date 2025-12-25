@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { VocabularyWord, StudyQuestion, DifficultyRating } from '@/types/vocabulary';
 import { selectWordsForSession } from '@/lib/srs';
 import { generateSessionQuestions, checkAnswer } from '@/lib/questions';
@@ -23,9 +23,13 @@ export function useStudySession(
   const [sessionWords, setSessionWords] = useState<VocabularyWord[]>([]);
   const [questions, setQuestions] = useState<StudyQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Map<string, { isCorrect: boolean; difficulty: DifficultyRating }>>(new Map());
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
+  
+  // Track answers properly with correct count
+  const answersRef = useRef<Map<string, { isCorrect: boolean; difficulty: DifficultyRating }>>(new Map());
+  const correctCountRef = useRef(0);
+  const answeredCountRef = useRef(0);
   
   // Track previous word levels to detect level changes
   const prevLevelsRef = useRef<Map<string, number>>(new Map());
@@ -51,10 +55,14 @@ export function useStudySession(
     selected.forEach(w => initialLevels.set(w.id, w.level));
     prevLevelsRef.current = initialLevels;
     
+    // Reset all tracking
+    answersRef.current = new Map();
+    correctCountRef.current = 0;
+    answeredCountRef.current = 0;
+    
     setSessionWords(selected);
     setQuestions(sessionQuestions);
     setCurrentIndex(0);
-    setAnswers(new Map());
     setStartTime(new Date());
     setSessionResult(null);
     setIsActive(true);
@@ -66,19 +74,22 @@ export function useStudySession(
     userAnswer: string,
     difficulty: DifficultyRating = 'good'
   ) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion) return false;
 
+    const wordId = currentQuestion.word.id;
     const isCorrect = checkAnswer(userAnswer, currentQuestion.correctAnswer);
     
-    // Record answer
-    setAnswers(prev => {
-      const newAnswers = new Map(prev);
-      newAnswers.set(currentQuestion.word.id, { isCorrect, difficulty });
-      return newAnswers;
-    });
-
-    // Update the word in the main store IMMEDIATELY (progress is saved after each question)
-    onUpdateWord(currentQuestion.word.id, isCorrect, difficulty);
+    // Only count if not already answered
+    if (!answersRef.current.has(wordId)) {
+      answersRef.current.set(wordId, { isCorrect, difficulty });
+      answeredCountRef.current += 1;
+      if (isCorrect) {
+        correctCountRef.current += 1;
+      }
+      
+      // Update the word in the main store IMMEDIATELY
+      onUpdateWord(wordId, isCorrect, difficulty);
+    }
 
     return isCorrect;
   }, [currentQuestion, onUpdateWord]);
@@ -86,14 +97,16 @@ export function useStudySession(
   const skipQuestion = useCallback(() => {
     if (!currentQuestion) return;
 
-    // Mark as incorrect with hard difficulty
-    setAnswers(prev => {
-      const newAnswers = new Map(prev);
-      newAnswers.set(currentQuestion.word.id, { isCorrect: false, difficulty: 'hard' });
-      return newAnswers;
-    });
-
-    onUpdateWord(currentQuestion.word.id, false, 'hard');
+    const wordId = currentQuestion.word.id;
+    
+    // Only count if not already answered
+    if (!answersRef.current.has(wordId)) {
+      answersRef.current.set(wordId, { isCorrect: false, difficulty: 'hard' });
+      answeredCountRef.current += 1;
+      // Skip counts as incorrect, so don't increment correctCountRef
+      
+      onUpdateWord(wordId, false, 'hard');
+    }
   }, [currentQuestion, onUpdateWord]);
 
   const nextQuestion = useCallback(() => {
@@ -108,8 +121,8 @@ export function useStudySession(
     const endTime = new Date();
     const duration = startTime ? (endTime.getTime() - startTime.getTime()) / 1000 : 0;
 
-    const answeredCount = answers.size;
-    const correctAnswers = Array.from(answers.values()).filter(a => a.isCorrect).length;
+    const answeredCount = answeredCountRef.current;
+    const correctAnswers = correctCountRef.current;
     const accuracy = answeredCount > 0 ? (correctAnswers / answeredCount) * 100 : 0;
 
     // Find words that leveled up or down
@@ -117,7 +130,7 @@ export function useStudySession(
     const wordsLeveledDown: VocabularyWord[] = [];
     const incorrectWords: VocabularyWord[] = [];
 
-    answers.forEach((answer, wordId) => {
+    answersRef.current.forEach((answer, wordId) => {
       const word = sessionWords.find(w => w.id === wordId);
       const prevLevel = prevLevelsRef.current.get(wordId) || 1;
       
@@ -140,7 +153,7 @@ export function useStudySession(
       incorrectWords,
       duration,
     };
-  }, [answers, sessionWords, startTime]);
+  }, [sessionWords, startTime]);
 
   const endSession = useCallback(() => {
     const result = calculateResult();
@@ -154,9 +167,11 @@ export function useStudySession(
     setSessionWords([]);
     setQuestions([]);
     setCurrentIndex(0);
-    setAnswers(new Map());
     setStartTime(null);
     setSessionResult(null);
+    answersRef.current = new Map();
+    correctCountRef.current = 0;
+    answeredCountRef.current = 0;
     prevLevelsRef.current = new Map();
   }, []);
 
@@ -165,7 +180,7 @@ export function useStudySession(
     currentQuestion,
     currentIndex,
     totalQuestions: questions.length,
-    answeredCount: answers.size,
+    answeredCount: answeredCountRef.current,
     progress,
     sessionResult,
     startSession,

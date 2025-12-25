@@ -49,7 +49,20 @@ export interface LearningStreak {
   last_study_date: string | null; // YYYY-MM-DD
 }
 
-export type QuestionType = 'cloze' | 'multiple_choice' | 'listening' | 'active_recall';
+// 6 Question Types:
+// A - gap_fill_text: Sentence with blank, text options
+// B - gap_fill_audio: Sentence with blank, audio options
+// C - context_meaning: Full sentence with underlined word, meaning options
+// D - simple_meaning: Just the word, meaning options
+// E - dictation: Listen to audio, type the word
+// F - translation: Show Vietnamese meaning, type English word
+export type QuestionType = 
+  | 'gap_fill_text' 
+  | 'gap_fill_audio' 
+  | 'context_meaning' 
+  | 'simple_meaning' 
+  | 'dictation' 
+  | 'translation';
 
 export interface StudyQuestion {
   id: string;
@@ -57,8 +70,9 @@ export interface StudyQuestion {
   type: QuestionType;
   question: string;
   correctAnswer: string;
-  options?: string[]; // For multiple choice
-  clozeText?: string; // For cloze questions
+  options?: string[]; // For multiple choice types
+  clozeText?: string; // For gap fill questions (sentence with blank)
+  underlinedText?: string; // For context meaning (sentence with underlined word)
 }
 
 export type DifficultyRating = 'easy' | 'good' | 'hard';
