@@ -1,9 +1,10 @@
 import { VocabularyWord, StudyQuestion, QuestionType } from '@/types/vocabulary';
 
 /**
- * Generate a cloze (fill-in-the-blank) question
+ * Type A - Gap Fill with Text Options
+ * Show sentence with blank, options are text words
  */
-function generateClozeQuestion(word: VocabularyWord): StudyQuestion | null {
+function generateGapFillText(word: VocabularyWord, allWords: VocabularyWord[]): StudyQuestion | null {
   const example = word.example_en;
   const vocabulary = word.vocabulary.toLowerCase();
   
@@ -13,103 +14,178 @@ function generateClozeQuestion(word: VocabularyWord): StudyQuestion | null {
     return null;
   }
   
-  const clozeText = example.replace(regex, '_____');
+  const clozeText = example.replace(regex, '[_____]');
+  
+  // Get distractors (other vocabulary words)
+  const distractors = getDistractorWords(word, allWords, 3);
+  const options = [word.vocabulary, ...distractors].sort(() => Math.random() - 0.5);
   
   return {
-    id: `cloze-${word.id}-${Date.now()}`,
+    id: `gap-text-${word.id}-${Date.now()}`,
     word,
-    type: 'cloze',
+    type: 'gap_fill_text',
     question: 'Fill in the blank:',
     correctAnswer: word.vocabulary,
     clozeText,
+    options,
   };
 }
 
 /**
- * Generate a multiple choice question
+ * Type B - Gap Fill with Audio Options
+ * Show sentence with blank, options are audio buttons
  */
-function generateMultipleChoiceQuestion(
-  word: VocabularyWord,
-  allWords: VocabularyWord[],
-  useMeaningVI: boolean = true
-): StudyQuestion {
-  const correctMeaning = useMeaningVI ? word.meaning_vi : word.meaning_en;
+function generateGapFillAudio(word: VocabularyWord, allWords: VocabularyWord[]): StudyQuestion | null {
+  const example = word.example_en;
+  const vocabulary = word.vocabulary.toLowerCase();
   
-  // Get distractors - prefer same topic
-  const sameTopicWords = allWords.filter(
-    w => w.id !== word.id && w.topic === word.topic
-  );
-  const otherWords = allWords.filter(
-    w => w.id !== word.id && w.topic !== word.topic
-  );
+  // Check if the vocabulary appears in the example
+  const regex = new RegExp(`\\b${vocabulary}\\b`, 'gi');
+  if (!regex.test(example)) {
+    return null;
+  }
+  
+  const clozeText = example.replace(regex, '[_____]');
+  
+  // Get distractors
+  const distractors = getDistractorWords(word, allWords, 3);
+  const options = [word.vocabulary, ...distractors].sort(() => Math.random() - 0.5);
+  
+  return {
+    id: `gap-audio-${word.id}-${Date.now()}`,
+    word,
+    type: 'gap_fill_audio',
+    question: 'Listen and fill in the blank:',
+    correctAnswer: word.vocabulary,
+    clozeText,
+    options,
+  };
+}
+
+/**
+ * Type C - Context Meaning
+ * Show full sentence with underlined word, options are meanings
+ */
+function generateContextMeaning(word: VocabularyWord, allWords: VocabularyWord[]): StudyQuestion {
+  const example = word.example_en;
+  const vocabulary = word.vocabulary;
+  
+  // Create underlined version of the sentence
+  const regex = new RegExp(`\\b(${vocabulary})\\b`, 'gi');
+  const underlinedText = example.replace(regex, '<u>$1</u>');
+  
+  // Get meaning distractors
+  const distractorMeanings = getDistractorMeanings(word, allWords, 3);
+  const options = [word.meaning_vi, ...distractorMeanings].sort(() => Math.random() - 0.5);
+  
+  return {
+    id: `context-${word.id}-${Date.now()}`,
+    word,
+    type: 'context_meaning',
+    question: 'What does the underlined word mean?',
+    correctAnswer: word.meaning_vi,
+    underlinedText,
+    options,
+  };
+}
+
+/**
+ * Type D - Simple Meaning
+ * Show just the word, options are meanings
+ */
+function generateSimpleMeaning(word: VocabularyWord, allWords: VocabularyWord[]): StudyQuestion {
+  // Get meaning distractors
+  const distractorMeanings = getDistractorMeanings(word, allWords, 3);
+  const options = [word.meaning_vi, ...distractorMeanings].sort(() => Math.random() - 0.5);
+  
+  return {
+    id: `simple-${word.id}-${Date.now()}`,
+    word,
+    type: 'simple_meaning',
+    question: `What does "${word.vocabulary}" mean?`,
+    correctAnswer: word.meaning_vi,
+    options,
+  };
+}
+
+/**
+ * Type E - Dictation
+ * User listens to audio and types the word
+ */
+function generateDictation(word: VocabularyWord): StudyQuestion {
+  return {
+    id: `dictation-${word.id}-${Date.now()}`,
+    word,
+    type: 'dictation',
+    question: 'Listen and type what you hear:',
+    correctAnswer: word.vocabulary,
+  };
+}
+
+/**
+ * Type F - Translation
+ * Show Vietnamese meaning, user types English word
+ */
+function generateTranslation(word: VocabularyWord): StudyQuestion {
+  return {
+    id: `translation-${word.id}-${Date.now()}`,
+    word,
+    type: 'translation',
+    question: 'Type the English word for:',
+    correctAnswer: word.vocabulary,
+  };
+}
+
+/**
+ * Get distractor words (vocabulary)
+ */
+function getDistractorWords(word: VocabularyWord, allWords: VocabularyWord[], count: number): string[] {
+  const sameTopicWords = allWords.filter(w => w.id !== word.id && w.topic === word.topic);
+  const otherWords = allWords.filter(w => w.id !== word.id && w.topic !== word.topic);
   
   const potentialDistractors = [...sameTopicWords, ...otherWords];
   const distractors: string[] = [];
   
-  // Shuffle and pick 3 distractors
   const shuffled = potentialDistractors.sort(() => Math.random() - 0.5);
   for (const w of shuffled) {
-    if (distractors.length >= 3) break;
-    const meaning = useMeaningVI ? w.meaning_vi : w.meaning_en;
-    if (meaning && meaning !== correctMeaning && !distractors.includes(meaning)) {
-      distractors.push(meaning);
+    if (distractors.length >= count) break;
+    if (w.vocabulary !== word.vocabulary && !distractors.includes(w.vocabulary)) {
+      distractors.push(w.vocabulary);
     }
   }
   
-  // If not enough distractors, add some generic ones
-  while (distractors.length < 3) {
-    distractors.push(`Unknown meaning ${distractors.length + 1}`);
+  // Fallback if not enough distractors
+  while (distractors.length < count) {
+    distractors.push(`word${distractors.length + 1}`);
   }
   
-  // Shuffle options with correct answer
-  const options = [correctMeaning, ...distractors].sort(() => Math.random() - 0.5);
-  
-  return {
-    id: `mc-${word.id}-${Date.now()}`,
-    word,
-    type: 'multiple_choice',
-    question: `What does "${word.vocabulary}" mean?`,
-    correctAnswer: correctMeaning,
-    options,
-  };
+  return distractors;
 }
 
 /**
- * Generate a listening question
+ * Get distractor meanings (Vietnamese)
  */
-function generateListeningQuestion(
-  word: VocabularyWord,
-  allWords: VocabularyWord[]
-): StudyQuestion {
-  // Get distractors
-  const otherWords = allWords.filter(w => w.id !== word.id);
-  const shuffled = otherWords.sort(() => Math.random() - 0.5);
-  const distractors = shuffled.slice(0, 3).map(w => w.vocabulary);
+function getDistractorMeanings(word: VocabularyWord, allWords: VocabularyWord[], count: number): string[] {
+  const sameTopicWords = allWords.filter(w => w.id !== word.id && w.topic === word.topic);
+  const otherWords = allWords.filter(w => w.id !== word.id && w.topic !== word.topic);
   
-  // Shuffle options
-  const options = [word.vocabulary, ...distractors].sort(() => Math.random() - 0.5);
+  const potentialDistractors = [...sameTopicWords, ...otherWords];
+  const distractors: string[] = [];
   
-  return {
-    id: `listen-${word.id}-${Date.now()}`,
-    word,
-    type: 'listening',
-    question: 'Listen and select the correct word:',
-    correctAnswer: word.vocabulary,
-    options,
-  };
-}
-
-/**
- * Generate an active recall question
- */
-function generateActiveRecallQuestion(word: VocabularyWord): StudyQuestion {
-  return {
-    id: `recall-${word.id}-${Date.now()}`,
-    word,
-    type: 'active_recall',
-    question: `Type the English word for:\n"${word.meaning_vi}"`,
-    correctAnswer: word.vocabulary,
-  };
+  const shuffled = potentialDistractors.sort(() => Math.random() - 0.5);
+  for (const w of shuffled) {
+    if (distractors.length >= count) break;
+    if (w.meaning_vi !== word.meaning_vi && !distractors.includes(w.meaning_vi)) {
+      distractors.push(w.meaning_vi);
+    }
+  }
+  
+  // Fallback
+  while (distractors.length < count) {
+    distractors.push(`meaning ${distractors.length + 1}`);
+  }
+  
+  return distractors;
 }
 
 /**
@@ -122,13 +198,15 @@ export function generateQuestion(
 ): StudyQuestion {
   const availableTypes: QuestionType[] = [];
   
-  // Check which types are available for this word
-  const clozeQuestion = generateClozeQuestion(word);
-  if (clozeQuestion) {
-    availableTypes.push('cloze');
-  }
+  // Check which types are available
+  const gapFillTextQ = generateGapFillText(word, allWords);
+  const gapFillAudioQ = generateGapFillAudio(word, allWords);
   
-  availableTypes.push('multiple_choice', 'listening', 'active_recall');
+  if (gapFillTextQ) availableTypes.push('gap_fill_text');
+  if (gapFillAudioQ) availableTypes.push('gap_fill_audio');
+  
+  // These are always available
+  availableTypes.push('context_meaning', 'simple_meaning', 'dictation', 'translation');
   
   // Select type
   let selectedType = preferredType;
@@ -137,22 +215,26 @@ export function generateQuestion(
   }
   
   switch (selectedType) {
-    case 'cloze':
-      return clozeQuestion || generateMultipleChoiceQuestion(word, allWords);
-    case 'multiple_choice':
-      return generateMultipleChoiceQuestion(word, allWords);
-    case 'listening':
-      return generateListeningQuestion(word, allWords);
-    case 'active_recall':
-      return generateActiveRecallQuestion(word);
+    case 'gap_fill_text':
+      return gapFillTextQ || generateSimpleMeaning(word, allWords);
+    case 'gap_fill_audio':
+      return gapFillAudioQ || generateDictation(word);
+    case 'context_meaning':
+      return generateContextMeaning(word, allWords);
+    case 'simple_meaning':
+      return generateSimpleMeaning(word, allWords);
+    case 'dictation':
+      return generateDictation(word);
+    case 'translation':
+      return generateTranslation(word);
     default:
-      return generateMultipleChoiceQuestion(word, allWords);
+      return generateSimpleMeaning(word, allWords);
   }
 }
 
 /**
  * Generate questions for a study session
- * Ensures at least 3 different question types
+ * Ensures variety of question types
  */
 export function generateSessionQuestions(
   words: VocabularyWord[],
@@ -161,34 +243,33 @@ export function generateSessionQuestions(
   if (words.length === 0) return [];
   
   const questions: StudyQuestion[] = [];
-  const types: QuestionType[] = ['cloze', 'multiple_choice', 'listening', 'active_recall'];
-  const usedTypes = new Set<QuestionType>();
+  const allTypes: QuestionType[] = [
+    'gap_fill_text', 
+    'gap_fill_audio', 
+    'context_meaning', 
+    'simple_meaning', 
+    'dictation', 
+    'translation'
+  ];
   
-  // First, ensure at least 3 different types if we have enough words
-  const minTypes = Math.min(3, words.length);
-  const shuffledTypes = types.sort(() => Math.random() - 0.5);
+  // Shuffle types for variety
+  const shuffledTypes = [...allTypes].sort(() => Math.random() - 0.5);
   
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
-    let preferredType: QuestionType | undefined;
-    
-    // For first few questions, try to use different types
-    if (usedTypes.size < minTypes && i < shuffledTypes.length) {
-      preferredType = shuffledTypes[i];
-    }
-    
+    // Cycle through types for variety
+    const preferredType = shuffledTypes[i % shuffledTypes.length];
     const question = generateQuestion(word, allWords, preferredType);
     questions.push(question);
-    usedTypes.add(question.type);
   }
   
   return questions;
 }
 
 /**
- * Check if answer is correct (with some tolerance)
+ * Check if answer is correct (case-insensitive, ignore whitespace and punctuation)
  */
 export function checkAnswer(userAnswer: string, correctAnswer: string): boolean {
-  const normalize = (s: string) => s.toLowerCase().trim().replace(/[^\w\s]/g, '');
+  const normalize = (s: string) => s.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
   return normalize(userAnswer) === normalize(correctAnswer);
 }
