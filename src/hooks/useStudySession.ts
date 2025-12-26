@@ -13,6 +13,16 @@ interface SessionResult {
   duration: number;
 }
 
+interface AnswerRecord {
+  questionId: string;
+  wordId: string;
+  userAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  difficulty: DifficultyRating;
+  timestamp: Date;
+}
+
 const MAX_QUESTIONS = 100;
 
 export function useStudySession(
@@ -26,10 +36,12 @@ export function useStudySession(
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   
-  // Track answers properly with correct count
-  const answersRef = useRef<Map<string, { isCorrect: boolean; difficulty: DifficultyRating }>>(new Map());
-  const correctCountRef = useRef(0);
-  const answeredCountRef = useRef(0);
+  // Use state for tracking so updates trigger re-renders
+  const [answeredCount, setAnsweredCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  
+  // Store detailed answer records
+  const answersRef = useRef<Map<string, AnswerRecord>>(new Map());
   
   // Track previous word levels to detect level changes
   const prevLevelsRef = useRef<Map<string, number>>(new Map());
@@ -57,8 +69,8 @@ export function useStudySession(
     
     // Reset all tracking
     answersRef.current = new Map();
-    correctCountRef.current = 0;
-    answeredCountRef.current = 0;
+    setAnsweredCount(0);
+    setCorrectCount(0);
     
     setSessionWords(selected);
     setQuestions(sessionQuestions);
@@ -73,23 +85,41 @@ export function useStudySession(
   const submitAnswer = useCallback((
     userAnswer: string,
     difficulty: DifficultyRating = 'good'
-  ) => {
+  ): boolean => {
     if (!currentQuestion) return false;
 
+    const questionId = currentQuestion.id;
     const wordId = currentQuestion.word.id;
+    
+    // Only count if this question hasn't been answered yet
+    if (answersRef.current.has(questionId)) {
+      // Already answered - just return the previous result
+      return answersRef.current.get(questionId)!.isCorrect;
+    }
+    
     const isCorrect = checkAnswer(userAnswer, currentQuestion.correctAnswer);
     
-    // Only count if not already answered
-    if (!answersRef.current.has(wordId)) {
-      answersRef.current.set(wordId, { isCorrect, difficulty });
-      answeredCountRef.current += 1;
-      if (isCorrect) {
-        correctCountRef.current += 1;
-      }
-      
-      // Update the word in the main store IMMEDIATELY
-      onUpdateWord(wordId, isCorrect, difficulty);
+    // Record this answer
+    const record: AnswerRecord = {
+      questionId,
+      wordId,
+      userAnswer,
+      correctAnswer: currentQuestion.correctAnswer,
+      isCorrect,
+      difficulty,
+      timestamp: new Date(),
+    };
+    
+    answersRef.current.set(questionId, record);
+    
+    // Update state counts
+    setAnsweredCount(prev => prev + 1);
+    if (isCorrect) {
+      setCorrectCount(prev => prev + 1);
     }
+    
+    // Update the word in the main store IMMEDIATELY
+    onUpdateWord(wordId, isCorrect, difficulty);
 
     return isCorrect;
   }, [currentQuestion, onUpdateWord]);
@@ -97,16 +127,30 @@ export function useStudySession(
   const skipQuestion = useCallback(() => {
     if (!currentQuestion) return;
 
+    const questionId = currentQuestion.id;
     const wordId = currentQuestion.word.id;
     
-    // Only count if not already answered
-    if (!answersRef.current.has(wordId)) {
-      answersRef.current.set(wordId, { isCorrect: false, difficulty: 'hard' });
-      answeredCountRef.current += 1;
-      // Skip counts as incorrect, so don't increment correctCountRef
-      
-      onUpdateWord(wordId, false, 'hard');
-    }
+    // Only count if this question hasn't been answered yet
+    if (answersRef.current.has(questionId)) return;
+    
+    // Record as incorrect skip
+    const record: AnswerRecord = {
+      questionId,
+      wordId,
+      userAnswer: '',
+      correctAnswer: currentQuestion.correctAnswer,
+      isCorrect: false,
+      difficulty: 'hard',
+      timestamp: new Date(),
+    };
+    
+    answersRef.current.set(questionId, record);
+    
+    // Update state counts
+    setAnsweredCount(prev => prev + 1);
+    // Don't increment correctCount for skips
+    
+    onUpdateWord(wordId, false, 'hard');
   }, [currentQuestion, onUpdateWord]);
 
   const nextQuestion = useCallback(() => {
@@ -121,32 +165,43 @@ export function useStudySession(
     const endTime = new Date();
     const duration = startTime ? (endTime.getTime() - startTime.getTime()) / 1000 : 0;
 
-    const answeredCount = answeredCountRef.current;
-    const correctAnswers = correctCountRef.current;
-    const accuracy = answeredCount > 0 ? (correctAnswers / answeredCount) * 100 : 0;
-
-    // Find words that leveled up or down
+    // Get counts from the answers map directly for accuracy
+    let totalAnswered = 0;
+    let totalCorrect = 0;
     const wordsLeveledUp: VocabularyWord[] = [];
     const wordsLeveledDown: VocabularyWord[] = [];
     const incorrectWords: VocabularyWord[] = [];
+    const processedWordIds = new Set<string>();
 
-    answersRef.current.forEach((answer, wordId) => {
-      const word = sessionWords.find(w => w.id === wordId);
-      const prevLevel = prevLevelsRef.current.get(wordId) || 1;
+    answersRef.current.forEach((record) => {
+      totalAnswered++;
+      if (record.isCorrect) {
+        totalCorrect++;
+      }
       
-      if (word) {
-        if (answer.isCorrect && prevLevel < 5) {
-          wordsLeveledUp.push(word);
-        } else if (!answer.isCorrect) {
-          wordsLeveledDown.push(word);
-          incorrectWords.push(word);
+      // Process word level changes (only once per word)
+      if (!processedWordIds.has(record.wordId)) {
+        processedWordIds.add(record.wordId);
+        
+        const word = sessionWords.find(w => w.id === record.wordId);
+        const prevLevel = prevLevelsRef.current.get(record.wordId) || 1;
+        
+        if (word) {
+          if (record.isCorrect && prevLevel < 5) {
+            wordsLeveledUp.push(word);
+          } else if (!record.isCorrect) {
+            wordsLeveledDown.push(word);
+            incorrectWords.push(word);
+          }
         }
       }
     });
 
+    const accuracy = totalAnswered > 0 ? (totalCorrect / totalAnswered) * 100 : 0;
+
     return {
-      totalQuestions: answeredCount,
-      correctAnswers,
+      totalQuestions: totalAnswered,
+      correctAnswers: totalCorrect,
       accuracy,
       wordsLeveledUp,
       wordsLeveledDown,
@@ -170,8 +225,8 @@ export function useStudySession(
     setStartTime(null);
     setSessionResult(null);
     answersRef.current = new Map();
-    correctCountRef.current = 0;
-    answeredCountRef.current = 0;
+    setAnsweredCount(0);
+    setCorrectCount(0);
     prevLevelsRef.current = new Map();
   }, []);
 
@@ -180,7 +235,8 @@ export function useStudySession(
     currentQuestion,
     currentIndex,
     totalQuestions: questions.length,
-    answeredCount: answeredCountRef.current,
+    answeredCount,
+    correctCount,
     progress,
     sessionResult,
     startSession,

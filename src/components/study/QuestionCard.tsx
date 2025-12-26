@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface QuestionCardProps {
   question: StudyQuestion;
-  onAnswer: (answer: string, difficulty: DifficultyRating) => boolean | undefined;
+  onAnswer: (answer: string, difficulty: DifficultyRating) => boolean;
   onSkip: () => void;
   onNext: () => void;
 }
@@ -17,15 +17,17 @@ interface QuestionCardProps {
 export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState('');
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showReviewPanel, setShowReviewPanel] = useState(false);
 
   // Reset state when question changes
   useEffect(() => {
     setSelectedOption(null);
     setTypedAnswer('');
-    setIsAnswered(false);
+    setIsSubmitted(false);
     setIsCorrect(null);
+    setShowReviewPanel(false);
   }, [question.id]);
 
   // TTS function
@@ -39,50 +41,67 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
 
   // Auto-play audio for dictation type
   useEffect(() => {
-    if (question.type === 'dictation' && !isAnswered) {
+    if (question.type === 'dictation' && !isSubmitted) {
       const timer = setTimeout(() => speak(question.word.vocabulary), 500);
       return () => clearTimeout(timer);
     }
-  }, [question.id, question.type, question.word.vocabulary, isAnswered, speak]);
+  }, [question.id, question.type, question.word.vocabulary, isSubmitted, speak]);
 
-  const handleSubmit = (answer: string) => {
-    if (isAnswered) return;
+  // Submit answer and show feedback - DO NOT advance to next question
+  const handleSubmitAnswer = (answer: string) => {
+    if (isSubmitted) return;
     
+    // Submit with default difficulty, we'll update if user selects different
     const correct = onAnswer(answer, 'good');
-    setIsCorrect(correct ?? false);
-    setIsAnswered(true);
+    setIsCorrect(correct);
+    setIsSubmitted(true);
+    setShowReviewPanel(true);
   };
 
+  // Handle Continue button - only now advance to next question
   const handleContinue = () => {
+    setShowReviewPanel(false);
     onNext();
   };
 
-  const handleDifficultyAndNext = (difficulty: DifficultyRating) => {
-    // Update with selected difficulty
-    onAnswer(selectedOption || typedAnswer, difficulty);
+  // Handle difficulty selection for correct answers
+  const handleDifficultySelect = (difficulty: DifficultyRating) => {
+    // The answer was already submitted, just continue
+    setShowReviewPanel(false);
     onNext();
   };
 
-  const handleOptionClick = (option: string) => {
-    if (isAnswered) return;
+  // Handle option selection for MCQ - just select, don't submit yet
+  const handleOptionSelect = (option: string) => {
+    if (isSubmitted) return;
     setSelectedOption(option);
-    handleSubmit(option);
   };
 
+  // Handle option click - select and submit immediately for MCQ
+  const handleOptionClick = (option: string) => {
+    if (isSubmitted) return;
+    setSelectedOption(option);
+    handleSubmitAnswer(option);
+  };
+
+  // Handle typed answer submission
   const handleTypedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!typedAnswer.trim()) return;
-    handleSubmit(typedAnswer);
+    if (!typedAnswer.trim() || isSubmitted) return;
+    handleSubmitAnswer(typedAnswer);
   };
 
+  // Handle "I don't know" - treat as incorrect, show feedback
   const handleSkip = () => {
+    if (isSubmitted) return;
     onSkip();
-    setIsAnswered(true);
     setIsCorrect(false);
+    setIsSubmitted(true);
+    setShowReviewPanel(true);
   };
 
   const getOptionVariant = (option: string) => {
-    if (!isAnswered) {
+    if (!isSubmitted) {
       return selectedOption === option ? 'optionSelected' : 'option';
     }
     if (option === question.correctAnswer) return 'optionCorrect';
@@ -220,7 +239,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
               variant={getOptionVariant(option)}
               className="w-full rounded-xl py-6 min-h-[60px]"
               onClick={() => handleOptionClick(option)}
-              disabled={isAnswered}
+              disabled={isSubmitted}
             >
               {isAudioOptions ? (
                 <div className="flex items-center gap-2 w-full justify-center">
@@ -259,11 +278,11 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
               placeholder="Type your answer..."
               className="text-lg h-12 rounded-xl"
               autoFocus
-              disabled={isAnswered}
+              disabled={isSubmitted}
             />
             <Button 
               type="submit" 
-              disabled={!typedAnswer.trim() || isAnswered}
+              disabled={!typedAnswer.trim() || isSubmitted}
               size="lg"
               className="rounded-xl"
             >
@@ -287,8 +306,8 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
           </span>
         </div>
 
-        {/* Question content - only show when not answered */}
-        {!isAnswered && (
+        {/* Question content - show even when answered to maintain context */}
+        {!showReviewPanel && (
           <>
             <div className="mb-8">
               {renderQuestionContent()}
@@ -303,6 +322,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
                 variant="ghost"
                 size="sm"
                 onClick={handleSkip}
+                disabled={isSubmitted}
                 className="text-muted-foreground rounded-full"
               >
                 <HelpCircle className="h-4 w-4 mr-2" />
@@ -312,15 +332,15 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
           </>
         )}
 
-        {/* Review Panel - show after answering */}
-        {isAnswered && isCorrect !== null && (
+        {/* Review Panel - show after submitting answer */}
+        {showReviewPanel && isCorrect !== null && (
           <ReviewPanel
             word={question.word}
             isCorrect={isCorrect}
             correctAnswer={question.correctAnswer}
             onContinue={handleContinue}
             showDifficulty={isCorrect === true}
-            onDifficultySelect={handleDifficultyAndNext}
+            onDifficultySelect={handleDifficultySelect}
           />
         )}
       </CardContent>
