@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Volume2, HelpCircle } from 'lucide-react';
+import { Volume2, HelpCircle, X } from 'lucide-react';
 import { StudyQuestion, DifficultyRating } from '@/types/vocabulary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ReviewPanel } from './ReviewPanel';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +20,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
   const [typedAnswer, setTypedAnswer] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [showReviewPanel, setShowReviewPanel] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
 
   // Reset state when question changes
   useEffect(() => {
@@ -27,7 +28,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
     setTypedAnswer('');
     setIsSubmitted(false);
     setIsCorrect(null);
-    setShowReviewPanel(false);
+    setShowResultModal(false);
   }, [question.id]);
 
   // TTS function
@@ -47,37 +48,23 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
     }
   }, [question.id, question.type, question.word.vocabulary, isSubmitted, speak]);
 
-  // Submit answer and show feedback - DO NOT advance to next question
+  // Submit answer and show feedback - DO NOT advance
   const handleSubmitAnswer = (answer: string) => {
     if (isSubmitted) return;
-    
-    // Submit with default difficulty, we'll update if user selects different
+
     const correct = onAnswer(answer, 'good');
     setIsCorrect(correct);
     setIsSubmitted(true);
-    setShowReviewPanel(true);
+    setShowResultModal(true);
   };
 
-  // Handle Continue button - only now advance to next question
+  // Continue - ONLY now advance
   const handleContinue = () => {
-    setShowReviewPanel(false);
+    setShowResultModal(false);
     onNext();
   };
 
-  // Handle difficulty selection for correct answers
-  const handleDifficultySelect = (difficulty: DifficultyRating) => {
-    // The answer was already submitted, just continue
-    setShowReviewPanel(false);
-    onNext();
-  };
-
-  // Handle option selection for MCQ - just select, don't submit yet
-  const handleOptionSelect = (option: string) => {
-    if (isSubmitted) return;
-    setSelectedOption(option);
-  };
-
-  // Handle option click - select and submit immediately for MCQ
+  // Handle option click - submit, but never advance
   const handleOptionClick = (option: string) => {
     if (isSubmitted) return;
     setSelectedOption(option);
@@ -97,7 +84,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
     onSkip();
     setIsCorrect(false);
     setIsSubmitted(true);
-    setShowReviewPanel(true);
+    setShowResultModal(true);
   };
 
   const getOptionVariant = (option: string) => {
@@ -111,13 +98,20 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
 
   const getTypeLabel = () => {
     switch (question.type) {
-      case 'gap_fill_text': return 'Fill in the Blank';
-      case 'gap_fill_audio': return 'Listen & Fill';
-      case 'context_meaning': return 'Context Meaning';
-      case 'simple_meaning': return 'Vocabulary';
-      case 'dictation': return 'Dictation';
-      case 'translation': return 'Translation';
-      default: return question.type;
+      case 'gap_fill_text':
+        return 'Fill in the Blank';
+      case 'gap_fill_audio':
+        return 'Listen & Fill';
+      case 'context_meaning':
+        return 'Context Meaning';
+      case 'simple_meaning':
+        return 'Vocabulary';
+      case 'dictation':
+        return 'Dictation';
+      case 'translation':
+        return 'Translation';
+      default:
+        return question.type;
     }
   };
 
@@ -128,9 +122,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
         return (
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-3">Fill in the blank:</p>
-            <p className="text-xl md:text-2xl font-medium leading-relaxed">
-              {question.clozeText}
-            </p>
+            <p className="text-xl md:text-2xl font-medium leading-relaxed">{question.clozeText}</p>
           </div>
         );
 
@@ -138,9 +130,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
         return (
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-3">Listen and fill in the blank:</p>
-            <p className="text-xl md:text-2xl font-medium leading-relaxed mb-4">
-              {question.clozeText}
-            </p>
+            <p className="text-xl md:text-2xl font-medium leading-relaxed mb-4">{question.clozeText}</p>
             <p className="text-sm text-muted-foreground">Click options to hear the word</p>
           </div>
         );
@@ -149,13 +139,14 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
         return (
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-3">What does the underlined word mean?</p>
-            <p 
+            <p
               className="text-xl md:text-2xl font-medium leading-relaxed"
-              dangerouslySetInnerHTML={{ 
-                __html: question.underlinedText?.replace(
-                  /<u>(.*?)<\/u>/g, 
-                  '<span class="underline decoration-2 decoration-primary underline-offset-4 font-bold text-primary">$1</span>'
-                ) || question.question 
+              dangerouslySetInnerHTML={{
+                __html:
+                  question.underlinedText?.replace(
+                    /<u>(.*?)<\/u>/g,
+                    '<span class="underline decoration-2 decoration-primary underline-offset-4 font-bold text-primary">$1</span>'
+                  ) || question.question,
               }}
             />
           </div>
@@ -166,9 +157,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-3">What does this word mean?</p>
             <div className="flex items-center justify-center gap-3">
-              <p className="text-3xl md:text-4xl font-bold text-primary">
-                {question.word.vocabulary}
-              </p>
+              <p className="text-3xl md:text-4xl font-bold text-primary">{question.word.vocabulary}</p>
               <Button
                 variant="ghost"
                 size="icon"
@@ -188,8 +177,8 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
             <button
               onClick={() => speak(question.word.vocabulary)}
               className={cn(
-                "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 transition-all",
-                "bg-primary/10 hover:bg-primary/20 active:scale-95 border-2 border-primary/20"
+                'w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 transition-all',
+                'bg-primary/10 hover:bg-primary/20 active:scale-95 border-2 border-primary/20'
               )}
             >
               <Volume2 className="h-10 w-10 text-primary" />
@@ -209,18 +198,12 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
         return (
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-3">Type the English word for:</p>
-            <p className="text-2xl md:text-3xl font-bold text-primary">
-              "{question.word.meaning_vi}"
-            </p>
+            <p className="text-2xl md:text-3xl font-bold text-primary">"{question.word.meaning_vi}"</p>
           </div>
         );
 
       default:
-        return (
-          <p className="text-xl md:text-2xl font-medium text-center">
-            {question.question}
-          </p>
-        );
+        return <p className="text-xl md:text-2xl font-medium text-center">{question.question}</p>;
     }
   };
 
@@ -280,8 +263,8 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
               autoFocus
               disabled={isSubmitted}
             />
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={!typedAnswer.trim() || isSubmitted}
               size="lg"
               className="rounded-xl"
@@ -297,53 +280,73 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto animate-scale-in overflow-hidden rounded-3xl">
-      <CardContent className="p-6 md:p-8">
-        {/* Question type badge */}
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground uppercase tracking-wide">
-            {getTypeLabel()}
-          </span>
-        </div>
+    <>
+      <Card className="w-full max-w-2xl mx-auto animate-scale-in overflow-hidden rounded-3xl">
+        <CardContent className="p-6 md:p-8">
+          {/* Question type badge */}
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground uppercase tracking-wide">
+              {getTypeLabel()}
+            </span>
+          </div>
 
-        {/* Question content - show even when answered to maintain context */}
-        {!showReviewPanel && (
-          <>
-            <div className="mb-8">
-              {renderQuestionContent()}
-            </div>
+          {/* Question content */}
+          <div className="mb-8">{renderQuestionContent()}</div>
 
-            {/* Answer options/input */}
-            {renderAnswerInput()}
+          {/* Answer options/input (locked after submit) */}
+          {renderAnswerInput()}
 
-            {/* Skip button */}
-            <div className="flex justify-center mt-4">
+          {/* Actions */}
+          <div className="flex flex-col items-center gap-3">
+            {!isSubmitted ? (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSkip}
-                disabled={isSubmitted}
                 className="text-muted-foreground rounded-full"
               >
                 <HelpCircle className="h-4 w-4 mr-2" />
                 I don't know
               </Button>
-            </div>
-          </>
-        )}
+            ) : (
+              <Button onClick={handleContinue} size="lg" className="rounded-full px-8">
+                Continue →
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Review Panel - show after submitting answer */}
-        {showReviewPanel && isCorrect !== null && (
-          <ReviewPanel
-            word={question.word}
-            isCorrect={isCorrect}
-            correctAnswer={question.correctAnswer}
-            onContinue={handleContinue}
-            showDifficulty={isCorrect === true}
-            onDifficultySelect={handleDifficultySelect}
-          />
-        )}
-      </CardContent>
-    </Card>
+      {/* Result popup/modal (shown after submit). Closing it does NOT advance; Continue does. */}
+      <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
+        <DialogContent className="rounded-3xl max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className="text-lg">Answer feedback</DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                onClick={() => setShowResultModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          {isCorrect !== null && (
+            <ReviewPanel
+              word={question.word}
+              isCorrect={!!isCorrect}
+              correctAnswer={question.correctAnswer}
+              onContinue={handleContinue}
+              // keep flow strict: never auto-advance via difficulty buttons
+              showDifficulty={false}
+              onDifficultySelect={() => {}}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
