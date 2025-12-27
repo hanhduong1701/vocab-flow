@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X, ArrowLeft } from 'lucide-react';
 import { VocabularyWord, DifficultyRating } from '@/types/vocabulary';
 import { useStudySession } from '@/hooks/useStudySession';
@@ -30,7 +30,13 @@ export function StudySession({ words, onUpdateWord, onClose }: StudySessionProps
     resetSession,
   } = useStudySession(words, onUpdateWord);
 
+  // IMPORTANT: do NOT restart the session when `words` changes after each answer.
+  // `onUpdateWord` updates the words array, which changes `startSession` identity.
+  // Without this guard, the session resets mid-quiz (looks like auto-advance + zero stats).
+  const startedRef = useRef(false);
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     startSession();
   }, [startSession]);
 
@@ -50,6 +56,7 @@ export function StudySession({ words, onUpdateWord, onClose }: StudySessionProps
       <SessionSummary
         result={sessionResult}
         onRestart={() => {
+          startedRef.current = false;
           resetSession();
           startSession();
         }}
@@ -79,33 +86,26 @@ export function StudySession({ words, onUpdateWord, onClose }: StudySessionProps
               <ArrowLeft className="h-4 w-4 mr-2" />
               Exit
             </Button>
-            
+
             <span className="text-sm font-medium text-muted-foreground">
               {currentIndex + 1} / {totalQuestions}
             </span>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={() => endSession()}
-            >
+
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => endSession()}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          
+
           <Progress value={progress} className="h-2 rounded-full" />
         </div>
       </header>
 
       {/* Question area */}
       <main className="container max-w-4xl mx-auto px-4 py-8">
-        <QuestionCard
-          question={currentQuestion}
-          onAnswer={handleAnswer}
-          onSkip={skipQuestion}
-          onNext={handleNext}
-        />
+        <QuestionCard question={currentQuestion} onAnswer={handleAnswer} onSkip={skipQuestion} onNext={handleNext} />
+
+        {/* ensures this component re-renders as answers change */}
+        <span className="sr-only">Answered: {answeredCount}</span>
       </main>
     </div>
   );
