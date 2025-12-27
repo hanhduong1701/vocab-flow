@@ -64,11 +64,16 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
     onNext();
   };
 
-  // Handle option click - submit, but never advance
+  // Handle option click - ONLY select/highlight (do not submit)
   const handleOptionClick = (option: string) => {
     if (isSubmitted) return;
     setSelectedOption(option);
-    handleSubmitAnswer(option);
+  };
+
+  const handleSubmitSelectedOption = () => {
+    if (isSubmitted) return;
+    if (!selectedOption) return;
+    handleSubmitAnswer(selectedOption);
   };
 
   // Handle typed answer submission
@@ -269,7 +274,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
               size="lg"
               className="rounded-xl"
             >
-              Check
+              Submit
             </Button>
           </div>
         </form>
@@ -278,6 +283,9 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
 
     return null;
   };
+
+
+  const hasOptionsQuestion = ['gap_fill_text', 'gap_fill_audio', 'context_meaning', 'simple_meaning'].includes(question.type);
 
   return (
     <>
@@ -299,15 +307,28 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
           {/* Actions */}
           <div className="flex flex-col items-center gap-3">
             {!isSubmitted ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSkip}
-                className="text-muted-foreground rounded-full"
-              >
-                <HelpCircle className="h-4 w-4 mr-2" />
-                I don't know
-              </Button>
+              <>
+                {hasOptionsQuestion && (
+                  <Button
+                    onClick={handleSubmitSelectedOption}
+                    size="lg"
+                    className="rounded-full px-10"
+                    disabled={!selectedOption}
+                  >
+                    Submit
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSkip}
+                  className="text-muted-foreground rounded-full"
+                >
+                  <HelpCircle className="h-4 w-4 mr-2" />
+                  I don't know
+                </Button>
+              </>
             ) : (
               <Button onClick={handleContinue} size="lg" className="rounded-full px-8">
                 Continue →
