@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressRing } from './ProgressRing';
 import { LevelBadge } from './LevelBadge';
 import { CSVSource, DailyStats, LearningStreak } from '@/types/vocabulary';
-import { cn } from '@/lib/utils';
 
 export interface DashboardProps {
   stats: {
@@ -161,23 +160,29 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(
                 </ProgressRing>
 
                 <div className="flex-1 space-y-3 w-full">
-                  {[1, 2, 3, 4, 5].map(level => {
-                    const count = stats.byLevel[level] || 0;
-                    const percent = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                  {(() => {
+                    const totalWords = stats.total;
+                    const levelColor = (level: number) => `hsl(var(--level-${level}))`;
 
-                    return (
-                      <div key={level} className="flex items-center gap-3">
-                        <LevelBadge level={level} size="sm" className="w-24" />
-                        <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className={cn('h-full rounded-full transition-all duration-500', `level-bar-${level}`)}
-                            style={{ width: `${Math.max(percent, 0)}%` }}
-                          />
+                    return [1, 2, 3, 4, 5].map(level => {
+                      const count = stats.byLevel[level] || 0;
+                      const percent = totalWords > 0 ? (count / totalWords) * 100 : 0;
+                      const width = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
+
+                      return (
+                        <div key={level} className="flex items-center gap-3">
+                          <LevelBadge level={level} size="sm" className="w-24" />
+                          <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${width}%`, backgroundColor: levelColor(level) }}
+                            />
+                          </div>
+                          <span className="text-sm text-muted-foreground w-10 text-right font-medium">{count}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground w-10 text-right font-medium">{count}</span>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
