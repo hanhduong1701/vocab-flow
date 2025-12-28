@@ -170,8 +170,8 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(
                         <LevelBadge level={level} size="sm" className="w-24" />
                         <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
                           <div
-                            className={cn('h-full rounded-full transition-all duration-500', `level-badge-${level}`)}
-                            style={{ width: `${percent}%` }}
+                            className={cn('h-full rounded-full transition-all duration-500', `level-bar-${level}`)}
+                            style={{ width: `${Math.max(percent, 0)}%` }}
                           />
                         </div>
                         <span className="text-sm text-muted-foreground w-10 text-right font-medium">{count}</span>
