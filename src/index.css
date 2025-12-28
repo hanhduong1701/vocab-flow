@@ -172,6 +172,27 @@
     @apply bg-[hsl(var(--level-5))] text-[hsl(270_50%_20%)];
   }
   
+  /* Progress bar colors - background only (no text color override) */
+  .level-bar-1 {
+    @apply bg-[hsl(var(--level-1))];
+  }
+  
+  .level-bar-2 {
+    @apply bg-[hsl(var(--level-2))];
+  }
+  
+  .level-bar-3 {
+    @apply bg-[hsl(var(--level-3))];
+  }
+  
+  .level-bar-4 {
+    @apply bg-[hsl(var(--level-4))];
+  }
+  
+  .level-bar-5 {
+    @apply bg-[hsl(var(--level-5))];
+  }
+  
   .btn-pastel {
     @apply rounded-full font-semibold transition-all duration-200 hover:scale-105 active:scale-95;
   }

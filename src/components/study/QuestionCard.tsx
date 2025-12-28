@@ -31,13 +31,24 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
     setShowResultModal(false);
   }, [question.id]);
 
-  // TTS function
+  // TTS function with error handling
   const speak = useCallback((text: string) => {
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.85;
-    speechSynthesis.speak(utterance);
+    try {
+      // Stop any currently playing audio
+      speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.85;
+      
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
+      };
+      
+      speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Failed to play audio:', error);
+    }
   }, []);
 
   // Auto-play audio for dictation type
@@ -226,22 +237,28 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
               key={index}
               variant={getOptionVariant(option)}
               className="w-full rounded-xl py-6 min-h-[60px]"
-              onClick={() => handleOptionClick(option)}
+              onClick={() => {
+                handleOptionClick(option);
+                // For audio options, play audio when selecting the option
+                if (isAudioOptions) {
+                  speak(option);
+                }
+              }}
               disabled={isSubmitted}
             >
               {isAudioOptions ? (
                 <div className="flex items-center gap-2 w-full justify-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full h-8 w-8 shrink-0"
+                  <button
+                    type="button"
+                    className="rounded-full h-8 w-8 shrink-0 flex items-center justify-center hover:bg-primary/10 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       speak(option);
                     }}
+                    disabled={isSubmitted}
                   >
                     <Volume2 className="h-4 w-4" />
-                  </Button>
+                  </button>
                   <span className="font-medium">{String.fromCharCode(65 + index)}</span>
                 </div>
               ) : (
