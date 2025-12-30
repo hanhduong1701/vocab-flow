@@ -2,6 +2,8 @@ import { VocabularyWord, ImportResult } from '@/types/vocabulary';
 
 interface RawCSVRow {
   vocabulary?: string;
+  Type?: string; // Part of speech
+  IPA?: string; // Pronunciation
   Meaning_VI?: string;
   Meaning_EN?: string;
   Example_EN?: string;
@@ -133,6 +135,8 @@ export function importCSV(
         newWords[index] = {
           ...existing,
           vocabulary: row.vocabulary.trim(),
+          type: row.Type?.trim() || existing.type,
+          ipa: row.IPA?.trim() || existing.ipa,
           meaning_vi: row.Meaning_VI?.trim() || existing.meaning_vi,
           meaning_en: row.Meaning_EN?.trim() || existing.meaning_en,
           example_en: row.Example_EN.trim(),
@@ -150,6 +154,8 @@ export function importCSV(
     const newWord: VocabularyWord = {
       id: generateId(),
       vocabulary: row.vocabulary.trim(),
+      type: row.Type?.trim(),
+      ipa: row.IPA?.trim(),
       meaning_vi: row.Meaning_VI?.trim() || '',
       meaning_en: row.Meaning_EN?.trim() || '',
       example_en: row.Example_EN.trim(),
@@ -176,7 +182,7 @@ export function importCSV(
  * Extract extra fields from a row
  */
 function extractExtraFields(row: RawCSVRow): Record<string, string> {
-  const knownFields = ['vocabulary', 'Meaning_VI', 'Meaning_EN', 'Example_EN', 'Example_VI', 'Topic'];
+  const knownFields = ['vocabulary', 'Type', 'IPA', 'Meaning_VI', 'Meaning_EN', 'Example_EN', 'Example_VI', 'Topic'];
   const extra: Record<string, string> = {};
   
   for (const [key, value] of Object.entries(row)) {

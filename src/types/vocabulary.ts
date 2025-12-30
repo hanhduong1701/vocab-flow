@@ -1,6 +1,8 @@
 export interface VocabularyWord {
   id: string;
   vocabulary: string;
+  type?: string; // Part of speech (noun, verb, adj, etc.)
+  ipa?: string; // IPA pronunciation
   meaning_vi: string;
   meaning_en: string;
   example_en: string;

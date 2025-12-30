@@ -56,7 +56,17 @@ export function ReviewPanel({
       <div className="bg-secondary/30 rounded-2xl p-5 space-y-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-foreground">{word.vocabulary}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-xl font-bold text-foreground">{word.vocabulary}</h3>
+              {word.type && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  {word.type}
+                </span>
+              )}
+            </div>
+            {word.ipa && (
+              <p className="text-sm text-muted-foreground font-mono">/{word.ipa}/</p>
+            )}
             <p className="text-muted-foreground font-medium">{word.meaning_vi}</p>
             <p className="text-sm text-muted-foreground">{word.meaning_en}</p>
           </div>

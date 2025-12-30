@@ -156,6 +156,14 @@ export function VocabularyList({ words, onDelete }: VocabularyListProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-semibold text-lg">{word.vocabulary}</h3>
+                    {word.type && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                        {word.type}
+                      </span>
+                    )}
+                    {word.ipa && (
+                      <span className="text-xs text-muted-foreground font-mono">/{word.ipa}/</span>
+                    )}
                     <LevelBadge level={word.level} size="sm" />
                     {word.topic && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
@@ -165,7 +173,9 @@ export function VocabularyList({ words, onDelete }: VocabularyListProps) {
                   </div>
                   
                   <p className="text-sm text-muted-foreground mb-1">
-                    {word.meaning_vi || word.meaning_en}
+                    <span className="font-medium">{word.meaning_vi}</span>
+                    {word.meaning_vi && word.meaning_en && ' — '}
+                    <span className="text-muted-foreground/80">{word.meaning_en}</span>
                   </p>
                   
                   <p className="text-xs text-muted-foreground/70 italic truncate">
