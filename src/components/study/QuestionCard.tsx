@@ -359,17 +359,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
       <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
         <DialogContent className="rounded-3xl max-w-lg">
           <DialogHeader>
-            <div className="flex items-center justify-between gap-3">
-              <DialogTitle className="text-lg">Answer feedback</DialogTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                onClick={() => setShowResultModal(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <DialogTitle className="text-lg">Answer feedback</DialogTitle>
           </DialogHeader>
 
           {isCorrect !== null && (
