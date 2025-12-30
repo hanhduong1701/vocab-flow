@@ -65,7 +65,7 @@ export function ReviewPanel({
               )}
             </div>
             {word.ipa && (
-              <p className="text-sm text-muted-foreground font-mono">/{word.ipa}/</p>
+              <p className="text-sm text-muted-foreground font-mono">{word.ipa}</p>
             )}
             <p className="text-muted-foreground font-medium">{word.meaning_vi}</p>
             <p className="text-sm text-muted-foreground">{word.meaning_en}</p>

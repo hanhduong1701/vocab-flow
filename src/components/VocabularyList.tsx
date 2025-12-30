@@ -162,7 +162,7 @@ export function VocabularyList({ words, onDelete }: VocabularyListProps) {
                       </span>
                     )}
                     {word.ipa && (
-                      <span className="text-xs text-muted-foreground font-mono">/{word.ipa}/</span>
+                      <span className="text-xs text-muted-foreground font-mono">{word.ipa}</span>
                     )}
                     <LevelBadge level={word.level} size="sm" />
                     {word.topic && (
