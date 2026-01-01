@@ -70,10 +70,10 @@ function parseCSVLine(line: string): string[] {
 }
 
 /**
- * Generate a unique ID
+ * Generate a unique UUID
  */
 function generateId(): string {
-  return `word-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return crypto.randomUUID();
 }
 
 /**
