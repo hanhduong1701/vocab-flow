@@ -34,12 +34,13 @@ export function useVocabulary() {
 
     const fetchData = async () => {
       try {
-        // Fetch vocabulary words
+        // Fetch vocabulary words (remove default 1000 row limit)
         const { data: wordsData, error: wordsError } = await supabase
           .from('vocabulary_words')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(10000);
 
         if (wordsError) throw wordsError;
 
