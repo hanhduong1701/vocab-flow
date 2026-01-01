@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_stats: {
+        Row: {
+          correct_count: number
+          date: string
+          id: string
+          user_id: string
+          words_studied: number
+        }
+        Insert: {
+          correct_count?: number
+          date?: string
+          id?: string
+          user_id: string
+          words_studied?: number
+        }
+        Update: {
+          correct_count?: number
+          date?: string
+          id?: string
+          user_id?: string
+          words_studied?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -37,6 +61,116 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          id: string
+          last_study_date: string | null
+          longest_streak: number
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          id?: string
+          last_study_date?: string | null
+          longest_streak?: number
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          id?: string
+          last_study_date?: string | null
+          longest_streak?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vocabulary_sources: {
+        Row: {
+          filename: string
+          id: string
+          imported_at: string
+          user_id: string
+          word_count: number
+        }
+        Insert: {
+          filename: string
+          id?: string
+          imported_at?: string
+          user_id: string
+          word_count?: number
+        }
+        Update: {
+          filename?: string
+          id?: string
+          imported_at?: string
+          user_id?: string
+          word_count?: number
+        }
+        Relationships: []
+      }
+      vocabulary_words: {
+        Row: {
+          correct_count: number
+          created_at: string
+          example: string | null
+          id: string
+          ipa: string | null
+          last_reviewed: string | null
+          level: number
+          meaning: string
+          meaning_en: string | null
+          next_review: string
+          review_count: number
+          source_id: string | null
+          type: string | null
+          user_id: string
+          word: string
+        }
+        Insert: {
+          correct_count?: number
+          created_at?: string
+          example?: string | null
+          id?: string
+          ipa?: string | null
+          last_reviewed?: string | null
+          level?: number
+          meaning: string
+          meaning_en?: string | null
+          next_review?: string
+          review_count?: number
+          source_id?: string | null
+          type?: string | null
+          user_id: string
+          word: string
+        }
+        Update: {
+          correct_count?: number
+          created_at?: string
+          example?: string | null
+          id?: string
+          ipa?: string | null
+          last_reviewed?: string | null
+          level?: number
+          meaning?: string
+          meaning_en?: string | null
+          next_review?: string
+          review_count?: number
+          source_id?: string | null
+          type?: string | null
+          user_id?: string
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocabulary_words_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "vocabulary_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
