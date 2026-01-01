@@ -6,7 +6,7 @@ import { ImportResult } from '@/types/vocabulary';
 import { cn } from '@/lib/utils';
 
 interface ImportCSVProps {
-  onImport: (csvText: string, onDuplicate: 'skip' | 'overwrite', filename: string) => ImportResult;
+  onImport: (csvText: string, onDuplicate: 'skip' | 'overwrite', filename: string) => Promise<ImportResult>;
   onSuccess: () => void;
 }
 
@@ -39,16 +39,26 @@ export function ImportCSV({ onImport, onSuccess }: ImportCSVProps) {
     if (!pendingFile) return;
     
     setIsImporting(true);
-    const text = await pendingFile.text();
-    const importResult = onImport(text, duplicateMode, pendingFile.name);
-    setResult(importResult);
-    setIsImporting(false);
-    
-    if (importResult.success > 0) {
-      // Auto redirect after short delay to show success
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
+    try {
+      const text = await pendingFile.text();
+      const importResult = await onImport(text, duplicateMode, pendingFile.name);
+      setResult(importResult);
+      
+      if (importResult.success > 0) {
+        // Auto redirect after short delay to show success
+        setTimeout(() => {
+          onSuccess();
+        }, 1500);
+      }
+    } catch (error) {
+      setResult({
+        success: 0,
+        skipped: 0,
+        failed: 1,
+        errors: ['Import failed. Please try again.'],
+      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
