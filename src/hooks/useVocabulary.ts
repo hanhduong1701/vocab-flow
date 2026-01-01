@@ -34,17 +34,32 @@ export function useVocabulary() {
 
     const fetchData = async () => {
       try {
-        // Fetch vocabulary words (remove default 1000 row limit)
-        const { data: wordsData, error: wordsError } = await supabase
-          .from('vocabulary_words')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10000);
+        // Fetch ALL vocabulary words using pagination (no limit)
+        let allWords: any[] = [];
+        let from = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (wordsError) throw wordsError;
+        while (hasMore) {
+          const { data: wordsData, error: wordsError } = await supabase
+            .from('vocabulary_words')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .range(from, from + pageSize - 1);
 
-        const mappedWords: VocabularyWord[] = (wordsData || []).map(w => ({
+          if (wordsError) throw wordsError;
+
+          if (wordsData && wordsData.length > 0) {
+            allWords = [...allWords, ...wordsData];
+            from += pageSize;
+            hasMore = wordsData.length === pageSize;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        const mappedWords: VocabularyWord[] = allWords.map(w => ({
           id: w.id,
           vocabulary: w.word,
           type: w.type || undefined,
