@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Volume2, HelpCircle, X } from 'lucide-react';
+import { Volume2, HelpCircle } from 'lucide-react';
 import { StudyQuestion, DifficultyRating } from '@/types/vocabulary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ReviewPanel } from './ReviewPanel';
 import { cn } from '@/lib/utils';
+import { speakText } from '@/lib/language-utils';
 
 interface QuestionCardProps {
   question: StudyQuestion;
@@ -31,24 +32,9 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
     setShowResultModal(false);
   }, [question.id]);
 
-  // TTS function with error handling
+  // TTS function with auto language detection
   const speak = useCallback((text: string) => {
-    try {
-      // Stop any currently playing audio
-      speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.85;
-      
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event.error);
-      };
-      
-      speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error('Failed to play audio:', error);
-    }
+    speakText(text);
   }, []);
 
   // Auto-play audio for dictation type
@@ -213,7 +199,7 @@ export function QuestionCard({ question, onAnswer, onSkip, onNext }: QuestionCar
       case 'translation':
         return (
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-3">Type the English word for:</p>
+            <p className="text-sm text-muted-foreground mb-3">Type the word for:</p>
             <p className="text-2xl md:text-3xl font-bold text-primary">"{question.word.meaning_vi}"</p>
           </div>
         );

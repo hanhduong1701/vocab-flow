@@ -2,6 +2,7 @@ import { Volume2 } from 'lucide-react';
 import { VocabularyWord } from '@/types/vocabulary';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { speakText } from '@/lib/language-utils';
 
 interface ReviewPanelProps {
   word: VocabularyWord;
@@ -21,11 +22,7 @@ export function ReviewPanel({
   onDifficultySelect,
 }: ReviewPanelProps) {
   const speak = (text: string) => {
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.85;
-    speechSynthesis.speak(utterance);
+    speakText(text);
   };
 
   return (
